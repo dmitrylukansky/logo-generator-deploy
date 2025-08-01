@@ -60,7 +60,7 @@ document.getElementById("aiNameBtn").addEventListener("click", async () => {
 
   try {
     const response = await fetch(
-      "https://logo-generator-server.vercel.app/api/generate-name",
+      "https://logo-generator-deploy.vercel.app/api/generate-name",
       {
         method: "POST",
         headers: {
