@@ -1,5 +1,5 @@
 {
-  "name": "logo-generator-server",
+  "name": "logo-generator-deploy",
   "version": "1.0.0",
   "main": "api/generate-name.js",
   "dependencies": {
