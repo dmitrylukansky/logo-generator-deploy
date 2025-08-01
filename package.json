@@ -1,0 +1,8 @@
+{
+  "name": "logo-generator-server",
+  "version": "1.0.0",
+  "main": "api/generate-name.js",
+  "dependencies": {
+    "openai": "^4.33.0"
+  }
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Генератор логотипов</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@700&family=Pacifico&family=Bebas+Neue&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Генератор логотипов</h1>
+      <div class="form">
+        <input
+          type="text"
+          id="brandName"
+          placeholder="Введите название бренда"
+        />
+        <input type="color" id="colorPicker" value="#007bff" />
+
+        <select id="fontSelect">
+          <option value="Montserrat">Montserrat</option>
+          <option value="Roboto">Roboto</option>
+          <option value="Pacifico">Pacifico</option>
+          <option value="Bebas Neue">Bebas Neue</option>
+        </select>
+
+        <select id="iconSelect">
+          <option value="★">Звезда</option>
+          <option value="⚡">Молния</option>
+          <option value="💡">Лампочка</option>
+          <option value="🔥">Огонь</option>
+          <option value="">(без иконки)</option>
+        </select>
+        <button id="generateBtn">Создать логотип</button>
+      </div>
+      <div id="logoArea"></div>
+
+      <button id="downloadBtn">Скачать логотип (SVG)</button>
+      <button id="randomColorBtn">Случайный цвет</button>
+      <input
+        type="text"
+        id="keywordInput"
+        placeholder="Ключевое слово (например, одежда)"
+      />
+      <button id="aiNameBtn">Сгенерировать название</button>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
