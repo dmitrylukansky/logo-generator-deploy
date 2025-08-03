@@ -10,14 +10,17 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  try {
-    let body = "";
-    req.on("data", (chunk) => {
-      body += chunk;
-    });
+  let body = "";
 
-    req.on("end", async () => {
-      const { keyword } = JSON.parse(body || "{}");
+  // Читаем поток запроса вручную
+  req.on("data", (chunk) => {
+    body += chunk;
+  });
+
+  req.on("end", async () => {
+    try {
+      const parsed = JSON.parse(body || "{}");
+      const keyword = parsed.keyword;
 
       if (!keyword) {
         return res.status(400).json({ error: "No keyword provided" });
@@ -35,11 +38,11 @@ module.exports = async (req, res) => {
         temperature: 0.8,
       });
 
-      const answer = completion.data.choices[0].message.content;
-      res.status(200).json({ result: answer });
-    });
-  } catch (error) {
-    console.error("OpenAI error:", error.response?.data || error.message);
-    res.status(500).json({ error: "OpenAI error" });
-  }
+      const result = completion.data.choices[0].message.content;
+      res.status(200).json({ result });
+    } catch (err) {
+      console.error("JSON parse or OpenAI error:", err.message);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
 };
