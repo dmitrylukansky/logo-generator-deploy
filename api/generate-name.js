@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  const { keyword } = req.body;
+  const { keyword } = req.body || {};
 
   if (!keyword) {
     return res.status(400).json({ error: "No keyword provided" });
@@ -25,15 +25,14 @@ module.exports = async (req, res) => {
           content: `Придумай 3 коротких названия бренда по ключевому слову "${keyword}". Без описаний.`,
         },
       ],
-      max_tokens: 50,
+      max_tokens: 60,
       temperature: 0.8,
     });
 
-    const answer = completion.data.choices[0].message.content;
-    res.status(200).json({ result: answer });
+    const result = completion.data.choices[0].message.content;
+    res.status(200).json({ result });
   } catch (error) {
-    console.error("OpenAI error:", error.message);
-    res.status(500).json({ error: "Failed to generate name" });
     console.error("OpenAI error:", error.response?.data || error.message);
+    res.status(500).json({ error: "OpenAI error" });
   }
 };
