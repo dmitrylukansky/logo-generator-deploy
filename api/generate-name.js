@@ -34,5 +34,6 @@ module.exports = async (req, res) => {
   } catch (error) {
     console.error("OpenAI error:", error.message);
     res.status(500).json({ error: "Failed to generate name" });
+    console.error("OpenAI error:", error.response?.data || error.message);
   }
 };
