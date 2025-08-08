@@ -59,18 +59,14 @@ document.getElementById("aiNameBtn").addEventListener("click", async () => {
   if (!keyword) return alert("Введите ключевое слово");
 
   try {
-    const response = await fetch(
-      "https://logo-generator-deploy.vercel.app/api/generate-name",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ keyword: "Тест" }),
-      }
-    )
-      .then((r) => r.json())
-      .then(console.log);
+    const response = await fetch("/api/generate-name", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keyword: "Тест" }),
+    })
+      .then((res) => res.json())
+      .then((data) => console.log("Результат:", data))
+      .catch((err) => console.error("Ошибка:", err));
 
     const data = await response.json();
 

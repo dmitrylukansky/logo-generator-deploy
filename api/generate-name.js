@@ -1,22 +1,30 @@
-const OpenAI = require("openai");
+const { Configuration, OpenAIApi } = require("openai");
 
-const openai = new OpenAI({
+const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 });
+const openai = new OpenAIApi(configuration);
 
 module.exports = async (req, res) => {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" });
-  }
-
   try {
+    // Разрешаем только POST
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    // Логируем входящий запрос
+    console.log("Incoming request:", req.method, req.url);
+
+    // Парсим тело
     const { keyword } = req.body || {};
+    console.log("Parsed keyword:", keyword);
 
     if (!keyword) {
       return res.status(400).json({ error: "No keyword provided" });
     }
 
-    const completion = await openai.chat.completions.create({
+    // Запрос к OpenAI
+    const completion = await openai.createChatCompletion({
       model: "gpt-3.5-turbo",
       messages: [
         {
@@ -28,10 +36,15 @@ module.exports = async (req, res) => {
       temperature: 0.8,
     });
 
-    const result = completion.choices[0].message.content;
-    res.status(200).json({ result });
+    const result = completion.data.choices?.[0]?.message?.content || "";
+    console.log("OpenAI result:", result);
+
+    return res.status(200).json({ result });
   } catch (err) {
-    console.error("OpenAI API error:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Server error:", err);
+    return res.status(500).json({
+      error: "Internal Server Error",
+      details: err.message || "Unknown error",
+    });
   }
 };
