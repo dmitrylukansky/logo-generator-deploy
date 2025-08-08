@@ -1,3 +1,5 @@
+// /pages/api/generate-name.js
+
 const { Configuration, OpenAIApi } = require("openai");
 
 const configuration = new Configuration({
@@ -6,46 +8,61 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 module.exports = async (req, res) => {
-  res.setHeader("Content-Type", "application/json"); // всегда JSON
+  res.setHeader("Content-Type", "application/json");
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method Not Allowed" });
+  }
 
   try {
-    // Разрешаем только POST
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method Not Allowed" });
-    }
-
-    // Логируем входящий запрос
-    console.log("Incoming request:", req.method, req.url);
-
-    console.log("Body:", req.body);
-
     const { keyword } = req.body || {};
-    if (!keyword) {
-      return res.status(400).json({ error: "No keyword provided" });
+    if (!keyword || typeof keyword !== "string") {
+      return res.status(400).json({ error: "No valid keyword provided" });
     }
 
-    // Запрос к OpenAI
     const completion = await openai.createChatCompletion({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "user",
-          content: `Придумай 3 коротких названия бренда по слову "${keyword}". Без описаний.`,
+          content: `Придумай ровно 3 коротких варианта названия бренда по слову "${keyword}". Ответь в JSON формате: {"names": ["название1", "название2", "название3"]}`,
         },
       ],
-      max_tokens: 50,
+      max_tokens: 100,
       temperature: 0.8,
     });
 
-    const result = completion.data.choices?.[0]?.message?.content || "";
-    console.log("OpenAI result:", result);
+    let rawContent = completion.data.choices?.[0]?.message?.content || "";
+    let names = [];
 
-    return res.status(200).json({ result });
+    try {
+      const parsed = JSON.parse(rawContent);
+      if (parsed?.names && Array.isArray(parsed.names)) {
+        names = parsed.names;
+      }
+    } catch {
+      // fallback: извлекаем названия построчно
+      names = rawContent
+        .split("\n")
+        .map((n) => n.replace(/^\d+\.?\s*/, "").trim())
+        .filter(Boolean)
+        .slice(0, 3);
+    }
+
+    if (names.length < 3) {
+      // добиваем до трёх безопасными вариантами
+      while (names.length < 3) {
+        names.push(`${keyword} ${names.length + 1}`);
+      }
+    }
+
+    return res.status(200).json({ names });
   } catch (err) {
     console.error("Server error:", err);
     return res.status(500).json({
       error: "Internal Server Error",
       details: err?.message || "Unknown error",
+      names: [],
     });
   }
 };
