@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "api/generate-name.js",
   "dependencies": {
+    "https-proxy-agent": "^7.0.6",
     "openai": "^4.104.0"
   },
   "description": "",
