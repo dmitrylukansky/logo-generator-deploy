@@ -64,7 +64,7 @@ document.getElementById("aiNameBtn").addEventListener("click", async () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ keyword: "Тест" }),
+      body: JSON.stringify({ keyword: "Текст" }),
     });
 
     const data = await response.json();
