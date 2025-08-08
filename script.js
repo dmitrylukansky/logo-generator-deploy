@@ -69,6 +69,7 @@ document.getElementById("aiNameBtn").addEventListener("click", async () => {
       .catch((err) => console.error("Ошибка:", err));
 
     const data = await response.json();
+    console.log("Результат:", data);
 
     if (!data.result) throw new Error("Пустой ответ");
 
