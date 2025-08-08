@@ -56,30 +56,43 @@ document.getElementById("aiNameBtn").addEventListener("click", async () => {
   const keyword = document.getElementById("keywordInput").value.trim();
   const nameField = document.getElementById("brandName");
 
-  if (!keyword) return alert("Введите ключевое слово");
+  if (!keyword) {
+    alert("Введите ключевое слово");
+    return;
+  }
 
   try {
     const response = await fetch("/api/generate-name", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keyword: "Тест" }),
-    })
-      .then((res) => res.json())
-      .then((data) => console.log("Результат:", data))
-      .catch((err) => console.error("Ошибка:", err));
+      body: JSON.stringify({ keyword }),
+    });
 
-    const data = await response.json();
-    console.log("Результат:", data);
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseErr) {
+      throw new Error(`Ошибка разбора JSON: ${parseErr.message}`);
+    }
 
-    if (!data.result) throw new Error("Пустой ответ");
+    if (!response.ok) {
+      // Сервер вернул ошибку
+      throw new Error(data?.error || `Ошибка сервера: ${response.status}`);
+    }
+
+    if (!data.result) {
+      throw new Error("Пустой ответ от сервера");
+    }
 
     const firstName = data.result
       .split("\n")
       .find((name) => name.trim())
       .replace(/^\d+\.?\s*/, "");
+
     nameField.value = firstName;
+    console.log("Сгенерированное название:", firstName);
   } catch (error) {
-    console.error(error);
+    console.error("Ошибка генерации названия:", error);
     alert("Ошибка генерации названия: " + error.message);
   }
 });
