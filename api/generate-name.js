@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
     console.error("Server error:", err);
     return res.status(500).json({
       error: "Internal Server Error",
-      details: err.message || "Unknown error",
+      details: err?.message || "Unknown error",
     });
   }
 };
