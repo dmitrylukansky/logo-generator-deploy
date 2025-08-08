@@ -6,6 +6,8 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 module.exports = async (req, res) => {
+  res.setHeader("Content-Type", "application/json"); // всегда JSON
+
   try {
     // Разрешаем только POST
     if (req.method !== "POST") {
@@ -15,10 +17,9 @@ module.exports = async (req, res) => {
     // Логируем входящий запрос
     console.log("Incoming request:", req.method, req.url);
 
-    // Парсим тело
-    const { keyword } = req.body || {};
-    console.log("Parsed keyword:", keyword);
+    console.log("Body:", req.body);
 
+    const { keyword } = req.body || {};
     if (!keyword) {
       return res.status(400).json({ error: "No keyword provided" });
     }
