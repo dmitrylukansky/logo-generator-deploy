@@ -52,6 +52,8 @@ document.getElementById("randomColorBtn").addEventListener("click", () => {
 
 //Подключим к OpenAI API (local server)
 
+// /public/js/client.js
+
 document.getElementById("aiNameBtn").addEventListener("click", async () => {
   const keyword = document.getElementById("keywordInput").value.trim();
   const nameField = document.getElementById("brandName");
@@ -76,21 +78,18 @@ document.getElementById("aiNameBtn").addEventListener("click", async () => {
     }
 
     if (!response.ok) {
-      // Сервер вернул ошибку
       throw new Error(data?.error || `Ошибка сервера: ${response.status}`);
     }
 
-    if (!data.result) {
-      throw new Error("Пустой ответ от сервера");
+    if (!data.names || !Array.isArray(data.names) || data.names.length === 0) {
+      throw new Error("Сервер не вернул названия");
     }
 
-    const firstName = data.result
-      .split("\n")
-      .find((name) => name.trim())
-      .replace(/^\d+\.?\s*/, "");
+    // Берём первый вариант для автозаполнения
+    nameField.value = data.names[0];
 
-    nameField.value = firstName;
-    console.log("Сгенерированное название:", firstName);
+    // Логируем все три варианта
+    console.log("Сгенерированные названия:", data.names);
   } catch (error) {
     console.error("Ошибка генерации названия:", error);
     alert("Ошибка генерации названия: " + error.message);
