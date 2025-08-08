@@ -59,16 +59,13 @@ document.getElementById("aiNameBtn").addEventListener("click", async () => {
   if (!keyword) return alert("Введите ключевое слово");
 
   try {
-    const response = await fetch(
-      "https://logo-generator-deploy.vercel.app/api/generate-name",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ keyword }),
-      }
-    );
+    const response = await fetch("/api/generate-name", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ keyword: "Тест" }),
+    });
 
     const data = await response.json();
 
