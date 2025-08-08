@@ -52,11 +52,10 @@ document.getElementById("randomColorBtn").addEventListener("click", () => {
 
 //Подключим к OpenAI API (local server)
 
-// /public/js/client.js
-
 document.getElementById("aiNameBtn").addEventListener("click", async () => {
   const keyword = document.getElementById("keywordInput").value.trim();
   const nameField = document.getElementById("brandName");
+  const resultsContainer = document.getElementById("nameResults");
 
   if (!keyword) {
     alert("Введите ключевое слово");
@@ -70,13 +69,19 @@ document.getElementById("aiNameBtn").addEventListener("click", async () => {
       body: JSON.stringify({ keyword }),
     });
 
-    let data;
-    try {
-      data = await response.json();
-    } catch (parseErr) {
-      throw new Error(`Ошибка разбора JSON: ${parseErr.message}`);
+    const contentType = (
+      response.headers.get("content-type") || ""
+    ).toLowerCase();
+    if (!contentType.includes("application/json")) {
+      const rawText = await response.text();
+      throw new Error(
+        `Сервер вернул не-JSON (${
+          contentType || "unknown"
+        }). Тело: ${rawText.slice(0, 200)}`
+      );
     }
 
+    const data = await response.json();
     if (!response.ok) {
       throw new Error(data?.error || `Ошибка сервера: ${response.status}`);
     }
@@ -85,13 +90,25 @@ document.getElementById("aiNameBtn").addEventListener("click", async () => {
       throw new Error("Сервер не вернул названия");
     }
 
-    // Берём первый вариант для автозаполнения
     nameField.value = data.names[0];
 
-    // Логируем все три варианта
-    console.log("Сгенерированные названия:", data.names);
-  } catch (error) {
-    console.error("Ошибка генерации названия:", error);
-    alert("Ошибка генерации названия: " + error.message);
+    if (resultsContainer) {
+      resultsContainer.innerHTML = "";
+      data.names.forEach((n) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ai-name-option";
+        btn.textContent = n;
+        btn.addEventListener("click", () => {
+          nameField.value = n;
+        });
+        resultsContainer.appendChild(btn);
+      });
+    }
+
+    console.log("Сгенерированные названия:", data.names, "Debug:", data.debug);
+  } catch (err) {
+    console.error("Ошибка генерации названия:", err);
+    alert("Ошибка генерации названия: " + (err.message || String(err)));
   }
 });
