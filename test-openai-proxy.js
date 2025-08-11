@@ -1,6 +1,6 @@
 // test-openai-proxy.js
 import "dotenv/config";
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import fetch from "node-fetch";
 
@@ -9,9 +9,8 @@ const proxyUrl = "http://127.0.0.1:8080";
 const httpsAgent = new HttpsProxyAgent(proxyUrl);
 
 async function testOpenAI() {
-  // Проверяем, что ключ подгрузился
   if (!process.env.OPENAI_API_KEY) {
-    console.error("❌ OPENAI_API_KEY не найден. Убедись, что он указан в .env");
+    console.error("❌ OPENAI_API_KEY не найден. Укажи его в .env");
     process.exit(1);
   }
 
@@ -27,16 +26,15 @@ async function testOpenAI() {
     return;
   }
 
-  // 2. Делаем тестовый запрос к OpenAI
-  const openai = new OpenAIApi(
-    new Configuration({
-      apiKey: process.env.OPENAI_API_KEY,
-      baseOptions: { httpsAgent },
-    })
-  );
+  // 2. Запрос к OpenAI
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    httpAgent: httpsAgent, // Для HTTP
+    httpsAgent: httpsAgent, // Для HTTPS
+  });
 
   try {
-    const completion = await openai.createChatCompletion({
+    const completion = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
@@ -49,7 +47,7 @@ async function testOpenAI() {
 
     console.log(
       "✅ Ответ OpenAI через прокси:",
-      completion.data.choices[0].message.content
+      completion.choices[0].message.content
     );
   } catch (err) {
     console.error("❌ Ошибка запроса к OpenAI:", err.message);
