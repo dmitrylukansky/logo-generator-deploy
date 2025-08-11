@@ -1,4 +1,8 @@
 const { Configuration, OpenAIApi } = require("openai");
+const { HttpsProxyAgent } = require("https-proxy-agent");
+
+// Создаём агент для HTTP-прокси Psiphon (порт 8080)
+const proxyAgent = new HttpsProxyAgent("http://127.0.0.1:8080");
 
 module.exports = async function handler(req, res) {
   res.setHeader("Content-Type", "application/json");
@@ -23,9 +27,16 @@ module.exports = async function handler(req, res) {
       throw new Error("OPENAI_API_KEY not set");
     }
 
-    const openai = new OpenAIApi(
-      new Configuration({ apiKey: process.env.OPENAI_API_KEY })
-    );
+    // Передаём агент в конфигурацию OpenAI
+    const configuration = new Configuration({
+      apiKey: process.env.OPENAI_API_KEY,
+      baseOptions: {
+        httpsAgent: proxyAgent, // Все HTTPS-запросы OpenAI пойдут через прокси
+      },
+    });
+
+    const openai = new OpenAIApi(configuration);
+
     const completion = await openai.createChatCompletion({
       model: "gpt-3.5-turbo",
       messages: [
