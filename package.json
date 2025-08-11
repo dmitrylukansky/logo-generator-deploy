@@ -4,7 +4,9 @@
   "type": "module",
   "main": "api/generate-name.js",
   "dependencies": {
+    "dotenv": "^17.2.1",
     "https-proxy-agent": "^7.0.6",
+    "node-fetch": "^3.3.2",
     "openai": "^4.104.0"
   },
   "description": "",
