@@ -1,4 +1,4 @@
-// test-openai-proxy.js
+/* // test-openai-proxy.js
 import "dotenv/config";
 import OpenAI from "openai";
 import { HttpsProxyAgent } from "https-proxy-agent";
@@ -55,3 +55,4 @@ async function testOpenAI() {
 }
 
 testOpenAI();
+ */
