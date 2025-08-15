@@ -1,74 +1,58 @@
-import dotenv from "dotenv";
-import fetch from "node-fetch";
-import HttpsProxyAgent from "https-proxy-agent";
-
-dotenv.config();
+// api/generate-name.js
+import OpenAI from "openai";
+import { HttpsProxyAgent } from "https-proxy-agent";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const { keyword } = req.body;
-  if (!keyword || typeof keyword !== "string" || !keyword.trim()) {
-    return res.status(400).json({ error: "Не передан keyword" });
-  }
-
-  const prompt = keyword.trim();
+  res.setHeader("Content-Type", "application/json");
 
   try {
-    const proxyAgent = new HttpsProxyAgent("http://127.0.0.1:8080"); // Psiphon HTTP прокси
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method Not Allowed", names: [] });
+    }
 
-    const openrouterRes = await fetch(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+    const { keyword } = req.body || {};
+    if (!keyword) {
+      return res.status(400).json({ error: "No keyword provided", names: [] });
+    }
+
+    // Настройка прокси-агента
+    const proxyUrl = "http://127.0.0.1:8080";
+    const agent = new HttpsProxyAgent(proxyUrl);
+
+    // Создаём клиента OpenAI с прокси
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      defaultHttpAgent: agent, // важный момент
+    });
+
+    // Запрос к GPT
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "user",
+          content: `Придумай 3 коротких названия бренда по слову "${keyword}". Без описаний, каждое на новой строке.`,
         },
-        body: JSON.stringify({
-          model: "openai/gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content:
-                'Ты генератор креативных названий. Отвечай ТОЛЬКО в JSON формате: {"name": "..."}.',
-            },
-            {
-              role: "user",
-              content: `Придумай креативное название для: ${prompt}`,
-            },
-          ],
-          temperature: 0.7,
-        }),
-        agent: proxyAgent,
-      }
-    );
+      ],
+      max_tokens: 50,
+      temperature: 0.8,
+    });
 
-    const data = await openrouterRes.json();
+    // Разбираем ответ
+    const raw = completion.choices?.[0]?.message?.content || "";
+    const names = raw
+      .split("\n")
+      .map((n) => n.replace(/^\d+\.?\s*/, "").trim())
+      .filter(Boolean)
+      .slice(0, 3);
 
-    let name = null;
-    try {
-      // Пытаемся найти JSON в ответе модели
-      const match = data.choices?.[0]?.message?.content?.match(/\{.*\}/s);
-      if (match) {
-        const parsed = JSON.parse(match[0]);
-        name = parsed.name;
-      }
-    } catch (e) {
-      console.error("Ошибка парсинга JSON от OpenRouter:", e);
-    }
-
-    if (!name) {
-      return res
-        .status(500)
-        .json({ error: "Ответ OpenRouter не в формате JSON" });
-    }
-
-    res.status(200).json({ name });
-  } catch (error) {
-    console.error("Ошибка запроса к OpenRouter:", error);
-    res.status(500).json({ error: "Ошибка сервера" });
+    return res.status(200).json({ names });
+  } catch (err) {
+    console.error("Server error:", err);
+    return res.status(500).json({
+      error: "Internal Server Error",
+      details: err?.message || "Unknown error",
+      names: [],
+    });
   }
 }
