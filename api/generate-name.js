@@ -85,8 +85,8 @@ function generateLocalNames(keyword) {
   if (tail) variants.add(`${tail}${core}`);
 
   // Собираем первые 3 уникальные
-  const out = Array.from(variants).filter(Boolean).slice(0, 5);
-  while (out.length < 5) out.push(`${core} ${out.length + 1}`);
+  const out = Array.from(variants).filter(Boolean).slice(0, 3);
+  while (out.length < 3) out.push(`${core} ${out.length + 1}`);
   return out;
 }
 
@@ -101,7 +101,7 @@ function parseNamesFromText(text) {
         .trim()
     )
     .filter(Boolean)
-    .slice(0, 5);
+    .slice(0, 3);
 }
 
 export default async function handler(req, res) {
@@ -145,8 +145,8 @@ export default async function handler(req, res) {
             {
               role: "user",
               content:
-                `Придумай ровно 5 очень коротких, брендовых названия по слову "${keyword.trim()}". ` +
-                `Ответь строго JSON: {"names":["n1","n2","n3","n4","n5"]}`,
+                `Придумай ровно 3 очень коротких, брендовых названия по слову "${keyword.trim()}". ` +
+                `Ответь строго JSON: {"names":["n1","n2","n3"]}`,
             },
           ],
           max_tokens: 100,
