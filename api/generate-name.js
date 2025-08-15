@@ -15,14 +15,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No keyword provided", names: [] });
     }
 
-    // Настройка прокси-агента
-    const proxyUrl = "http://127.0.0.1:8080";
-    const agent = new HttpsProxyAgent(proxyUrl);
+    // Агент для прокси
+    const proxyAgent = new HttpsProxyAgent("http://127.0.0.1:8080");
 
-    // Создаём клиента OpenAI с прокси
+    // Клиент OpenAI с прокси
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
-      defaultHttpAgent: agent, // важный момент
+      httpAgent: proxyAgent,
+      httpsAgent: proxyAgent,
     });
 
     // Запрос к GPT
@@ -31,20 +31,18 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "user",
-          content: `Придумай 3 коротких названия бренда по слову "${keyword}". Без описаний, каждое на новой строке.`,
+          content: `Придумай 3 коротких названия бренда по слову "${keyword}". Без описаний, только список.`,
         },
       ],
       max_tokens: 50,
       temperature: 0.8,
     });
 
-    // Разбираем ответ
-    const raw = completion.choices?.[0]?.message?.content || "";
-    const names = raw
+    const rawText = completion.choices?.[0]?.message?.content || "";
+    const names = rawText
       .split("\n")
-      .map((n) => n.replace(/^\d+\.?\s*/, "").trim())
-      .filter(Boolean)
-      .slice(0, 3);
+      .map((n) => n.trim().replace(/^\d+\.?\s*/, ""))
+      .filter(Boolean);
 
     return res.status(200).json({ names });
   } catch (err) {
