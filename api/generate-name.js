@@ -85,8 +85,8 @@ function generateLocalNames(keyword) {
   if (tail) variants.add(`${tail}${core}`);
 
   // Собираем первые 3 уникальные
-  const out = Array.from(variants).filter(Boolean).slice(0, 3);
-  while (out.length < 3) out.push(`${core} ${out.length + 1}`);
+  const out = Array.from(variants).filter(Boolean).slice(0, 5);
+  while (out.length < 5) out.push(`${core} ${out.length + 1}`);
   return out;
 }
 
@@ -101,7 +101,7 @@ function parseNamesFromText(text) {
         .trim()
     )
     .filter(Boolean)
-    .slice(0, 3);
+    .slice(0, 5);
 }
 
 export default async function handler(req, res) {
