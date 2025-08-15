@@ -1,79 +1,74 @@
-// api/generate-name.js
 import dotenv from "dotenv";
 import fetch from "node-fetch";
-import { HttpsProxyAgent } from "https-proxy-agent";
+import HttpsProxyAgent from "https-proxy-agent";
 
 dotenv.config();
 
-// Прокси Psiphon (локальный)
-const proxyAgent = new HttpsProxyAgent("http://127.0.0.1:8080");
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Метод не поддерживается" });
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const { keyword } = req.body;
+  if (!keyword || typeof keyword !== "string" || !keyword.trim()) {
+    return res.status(400).json({ error: "Не передан keyword" });
+  }
+
+  const prompt = keyword.trim();
+
   try {
-    const { keyword } = req.body;
-    if (!keyword || typeof keyword !== "string" || !keyword.trim()) {
-      return res.status(400).json({ error: "Не передан keyword" });
-    }
-    const prompt = keyword.trim();
+    const proxyAgent = new HttpsProxyAgent("http://127.0.0.1:8080"); // Psiphon HTTP прокси
 
-    console.log("📡 Запрос к OpenRouter через Psiphon-прокси...");
-
-    const response = await fetch(
+    const openrouterRes = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
           "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
         },
-        agent: proxyAgent,
         body: JSON.stringify({
-          model: "gpt-3.5-turbo",
+          model: "openai/gpt-4o-mini",
           messages: [
             {
               role: "system",
               content:
-                "Ты — генератор креативных коротких названий для бренда.",
+                'Ты генератор креативных названий. Отвечай ТОЛЬКО в JSON формате: {"name": "..."}.',
             },
             {
               role: "user",
-              content: `${prompt}. Сгенерируй 3 коротких и уникальных названия в JSON-массиве без пояснений.`,
+              content: `Придумай креативное название для: ${prompt}`,
             },
           ],
+          temperature: 0.7,
         }),
+        agent: proxyAgent,
       }
     );
 
-    if (!response.ok) {
-      const text = await response.text();
-      return res.status(response.status).json({
-        error: `Ошибка OpenRouter: ${response.status} ${text}`,
-      });
+    const data = await openrouterRes.json();
+
+    let name = null;
+    try {
+      // Пытаемся найти JSON в ответе модели
+      const match = data.choices?.[0]?.message?.content?.match(/\{.*\}/s);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        name = parsed.name;
+      }
+    } catch (e) {
+      console.error("Ошибка парсинга JSON от OpenRouter:", e);
     }
 
-    const data = await response.json();
-
-    let result;
-    try {
-      // Парсим содержимое, ожидаем JSON-массив
-      result = JSON.parse(data.choices[0].message.content.trim());
-    } catch (err) {
-      console.error("Ошибка парсинга ответа OpenRouter:", err);
+    if (!name) {
       return res
         .status(500)
         .json({ error: "Ответ OpenRouter не в формате JSON" });
     }
 
-    // ✅ Возвращаем массив названий
-    return res.status(200).json({ names: result });
+    res.status(200).json({ name });
   } catch (error) {
-    console.error("Ошибка генерации названия:", error);
-    return res
-      .status(500)
-      .json({ error: error.message || "Внутренняя ошибка сервера" });
+    console.error("Ошибка запроса к OpenRouter:", error);
+    res.status(500).json({ error: "Ошибка сервера" });
   }
 }
