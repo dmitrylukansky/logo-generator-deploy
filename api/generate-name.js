@@ -14,11 +14,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt } = req.body;
-
-    if (!prompt) {
-      return res.status(400).json({ error: "Не передан prompt" });
+    const { keyword } = req.body;
+    if (!keyword || typeof keyword !== "string" || !keyword.trim()) {
+      return res.status(400).json({ error: "Не передан keyword" });
     }
+    const prompt = keyword.trim();
 
     console.log("📡 Запрос к OpenRouter через Psiphon-прокси...");
 
