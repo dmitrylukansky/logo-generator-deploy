@@ -145,8 +145,8 @@ export default async function handler(req, res) {
             {
               role: "user",
               content:
-                `Придумай ровно 3 очень коротких, брендовых названия по слову "${keyword.trim()}". ` +
-                `Ответь строго JSON: {"names":["n1","n2","n3"]}`,
+                `Придумай ровно 5 очень коротких, брендовых названия по слову "${keyword.trim()}". ` +
+                `Ответь строго JSON: {"names":["n1","n2","n3","n4","n5"]}`,
             },
           ],
           max_tokens: 100,
