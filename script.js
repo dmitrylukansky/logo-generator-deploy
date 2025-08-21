@@ -120,75 +120,60 @@ document.getElementById("aiNameBtn").addEventListener("click", async () => {
 // - Renders 3 options as buttons (auto-creates container if absent)
 // =============================================
 
+let options = {
+  length: "short",
+  style: "creative",
+  lang: "ru",
+};
+
+document.querySelectorAll(".opt-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const type = btn.dataset.type;
+    const value = btn.dataset.value;
+    options[type] = value;
+
+    // Подсветка активной кнопки
+    document
+      .querySelectorAll(`.opt-btn[data-type="${type}"]`)
+      .forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+  });
+});
+
 document.getElementById("aiNameBtn").addEventListener("click", async () => {
   const keyword = document.getElementById("keywordInput").value.trim();
-  const nameField = document.getElementById("brandName");
-  let resultsContainer = document.getElementById("nameResults");
+  const resultsEl = document.getElementById("results");
+  resultsEl.innerHTML = "";
 
   if (!keyword) {
     alert("Введите ключевое слово");
     return;
   }
 
-  // Create container if not exists
-  if (!resultsContainer) {
-    resultsContainer = document.createElement("div");
-    resultsContainer.id = "nameResults";
-    resultsContainer.style.marginTop = "8px";
-    const target = nameField?.parentElement || document.body;
-    target.appendChild(resultsContainer);
-  }
-
   try {
     const response = await fetch("/api/generate-name", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keyword }),
+      body: JSON.stringify({ keyword, ...options }),
     });
-
-    const ct = (response.headers.get("content-type") || "").toLowerCase();
-    if (!ct.includes("application/json")) {
-      const text = await response.text();
-      throw new Error(
-        `Ожидался JSON, получено: ${ct || "unknown"}. Тело: ${text.slice(
-          0,
-          160
-        )}`
-      );
-    }
 
     const data = await response.json();
+
     if (!response.ok) {
-      throw new Error(data?.error || `Ошибка сервера: ${response.status}`);
+      throw new Error(data?.error || "Ошибка сервера");
     }
 
-    const names = Array.isArray(data.names) ? data.names.filter(Boolean) : [];
-    if (names.length < 1) throw new Error("Сервер не вернул названия");
+    if (!data.names?.length) {
+      throw new Error("Пустой ответ");
+    }
 
-    // Autofill first
-    if (nameField) nameField.value = names[0];
-
-    // Render all three as buttons
-    resultsContainer.innerHTML = "";
-    names.forEach((n) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.textContent = n;
-      btn.style.marginRight = "6px";
-      btn.style.marginBottom = "6px";
-      btn.style.padding = "6px 10px";
-      btn.style.borderRadius = "8px";
-      btn.style.border = "1px solid #ddd";
-      btn.style.cursor = "pointer";
-      btn.addEventListener("click", () => {
-        if (nameField) nameField.value = n;
-      });
-      resultsContainer.appendChild(btn);
+    data.names.forEach((name) => {
+      const li = document.createElement("li");
+      li.textContent = name;
+      resultsEl.appendChild(li);
     });
-
-    console.log("Сгенерированные названия:", names);
-  } catch (error) {
-    console.error("Ошибка генерации названия:", error);
-    alert("Ошибка генерации названия: " + (error.message || String(error)));
+  } catch (err) {
+    console.error("Ошибка генерации:", err);
+    alert("Ошибка генерации: " + err.message);
   }
 });
