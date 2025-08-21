@@ -1,4 +1,4 @@
-import "dotenv/config";
+/* import "dotenv/config";
 import OpenAI from "openai";
 import { HttpsProxyAgent } from "https-proxy-agent";
 
@@ -38,3 +38,4 @@ try {
 } catch (err) {
   console.error("❌ Ошибка запроса к OpenRouter:", err.message);
 }
+ */
