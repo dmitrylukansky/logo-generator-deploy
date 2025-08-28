@@ -1,5 +1,11 @@
 # Игнорируем директорию в любой директории проекта
 node_modules/
 test-proxy.js
-.env
 .vercel
+
+# Environment variables
+.env
+.env.* 
+# игнорирует .env.local, .env.production, и т.д.   
+!.env.example  
+# но можно оставить пустой шаблон для примера
