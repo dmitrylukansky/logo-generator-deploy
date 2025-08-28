@@ -1,5 +1,3 @@
-import https from "https";
-
 export default async function handler(req, res) {
   res.setHeader("Content-Type", "application/json");
 
@@ -19,7 +17,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No keyword provided", names: [] });
     }
 
-    // Формируем промпт
     const prompt = `Придумай 3 ${length === "short" ? "коротких" : "длинных"} 
 ${style === "formal" ? "официальных" : "креативных"} 
 названия бренда на ${
@@ -29,64 +26,55 @@ ${style === "formal" ? "официальных" : "креативных"}
 
     console.log("Prompt:", prompt);
 
-    // Если есть ключ OpenRouter → пробуем вызвать
-    if (process.env.OPENROUTER_API_KEY) {
-      try {
-        const response = await fetch(
-          "https://openrouter.ai/api/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "openai/gpt-3.5-turbo",
-              messages: [{ role: "user", content: prompt }],
-              temperature: 0.8,
-              max_tokens: 100,
-            }),
-            agent: process.env.PROXY_URL
-              ? new https.Agent({ proxy: process.env.PROXY_URL })
-              : undefined,
-          }
-        );
-
-        const data = await response.json();
-        console.log("OpenRouter result:", data);
-
-        const text = data?.choices?.[0]?.message?.content || "";
-        const names = text
-          .split("\n")
-          .map((n) => n.replace(/^\d+\.?\s*/, "").trim())
-          .filter(Boolean)
-          .slice(0, 3);
-
-        if (names.length) {
-          return res.status(200).json({ names });
-        }
-      } catch (err) {
-        console.error("OpenRouter error:", err);
-      }
+    if (!process.env.OPENROUTER_API_KEY) {
+      return res
+        .status(500)
+        .json({ error: "OPENROUTER_API_KEY is not set", names: [] });
     }
 
-    // === Fallback: случайные названия из словаря ===
-    const fallbackWords = [
-      "Nova",
-      "Lumo",
-      "Энерго",
-      "Вижн",
-      "Skyline",
-      "Aurora",
-      "Вектор",
-    ];
-    const names = Array.from({ length: 3 }, () => {
-      const w1 =
-        fallbackWords[Math.floor(Math.random() * fallbackWords.length)];
-      return `${w1} ${keyword}`;
-    });
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-3.5-turbo",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.8,
+          max_tokens: 100,
+        }),
+      }
+    );
 
-    return res.status(200).json({ names, fallback: true });
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("OpenRouter API error:", data);
+      return res
+        .status(response.status)
+        .json({
+          error: data.error?.message || "OpenRouter API error",
+          names: [],
+        });
+    }
+
+    const text = data?.choices?.[0]?.message?.content || "";
+    const names = text
+      .split("\n")
+      .map((n) => n.replace(/^\d+\.?\s*/, "").trim())
+      .filter(Boolean)
+      .slice(0, 3);
+
+    if (!names.length) {
+      return res
+        .status(500)
+        .json({ error: "ИИ не вернул названия", names: [] });
+    }
+
+    return res.status(200).json({ names });
   } catch (err) {
     console.error("Server error:", err);
     return res.status(500).json({ error: "Internal Server Error", names: [] });
